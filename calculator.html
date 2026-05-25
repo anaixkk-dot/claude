@@ -3,143 +3,387 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Неоновый калькулятор</title>
+<title>NEON CALC ◆ Holographic Edition</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
 <style>
+  :root {
+    --c1: #ff00c8;
+    --c2: #00f0ff;
+    --c3: #ff3366;
+    --c-bg-1: rgba(255, 0, 200, 0.15);
+    --c-bg-2: rgba(0, 200, 255, 0.15);
+    --c-bg-3: rgba(150, 0, 255, 0.1);
+  }
+
+  [data-theme="matrix"] {
+    --c1: #00ff7f;
+    --c2: #7dff00;
+    --c3: #ff4d4d;
+    --c-bg-1: rgba(0, 255, 127, 0.18);
+    --c-bg-2: rgba(125, 255, 0, 0.12);
+    --c-bg-3: rgba(0, 255, 200, 0.08);
+  }
+
+  [data-theme="sunset"] {
+    --c1: #ff7b00;
+    --c2: #ffd60a;
+    --c3: #ff006e;
+    --c-bg-1: rgba(255, 123, 0, 0.18);
+    --c-bg-2: rgba(255, 0, 110, 0.15);
+    --c-bg-3: rgba(255, 214, 10, 0.08);
+  }
+
   * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    font-family: 'Segoe UI', Tahoma, sans-serif;
+  }
+
+  html, body {
+    height: 100%;
+    overflow: hidden;
+    font-family: 'Orbitron', sans-serif;
+    background: #05050f;
+    color: #fff;
+    -webkit-font-smoothing: antialiased;
   }
 
   body {
-    min-height: 100vh;
     display: flex;
     justify-content: center;
     align-items: center;
-    background: #0a0a1f;
     background-image:
-      radial-gradient(circle at 20% 30%, rgba(255, 0, 200, 0.15), transparent 50%),
-      radial-gradient(circle at 80% 70%, rgba(0, 200, 255, 0.15), transparent 50%),
-      radial-gradient(circle at 50% 50%, rgba(150, 0, 255, 0.1), transparent 70%);
-    overflow: hidden;
-    position: relative;
+      radial-gradient(circle at 20% 30%, var(--c-bg-1), transparent 50%),
+      radial-gradient(circle at 80% 70%, var(--c-bg-2), transparent 50%),
+      radial-gradient(circle at 50% 50%, var(--c-bg-3), transparent 70%);
+    transition: background-image 0.8s;
+    perspective: 1500px;
   }
 
-  body::before {
+  #bg-canvas {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    opacity: 0.7;
+  }
+
+  body::after {
     content: '';
-    position: absolute;
-    width: 100%;
-    height: 100%;
+    position: fixed;
+    inset: 0;
     background-image:
-      linear-gradient(rgba(0, 255, 255, 0.03) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(0, 255, 255, 0.03) 1px, transparent 1px);
-    background-size: 40px 40px;
-    animation: gridMove 20s linear infinite;
+      linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+    background-size: 50px 50px;
+    animation: gridMove 30s linear infinite;
+    pointer-events: none;
+    mask-image: radial-gradient(ellipse at center, black 30%, transparent 80%);
+    z-index: 1;
   }
 
   @keyframes gridMove {
-    0% { transform: translate(0, 0); }
-    100% { transform: translate(40px, 40px); }
+    to { background-position: 50px 50px; }
   }
 
-  .stars {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    overflow: hidden;
+  .scanlines {
+    position: fixed;
+    inset: 0;
     pointer-events: none;
+    background: repeating-linear-gradient(0deg,
+      rgba(255, 255, 255, 0.015) 0px,
+      rgba(255, 255, 255, 0.015) 1px,
+      transparent 1px,
+      transparent 3px);
+    z-index: 100;
+    mix-blend-mode: overlay;
   }
 
-  .star {
-    position: absolute;
-    width: 2px;
-    height: 2px;
-    background: white;
+  .cursor-light {
+    position: fixed;
+    width: 600px;
+    height: 600px;
     border-radius: 50%;
-    animation: twinkle 3s infinite ease-in-out;
+    background: radial-gradient(circle, var(--c1) 0%, transparent 60%);
+    opacity: 0.15;
+    pointer-events: none;
+    transform: translate(-50%, -50%);
+    z-index: 1;
+    filter: blur(40px);
+    transition: opacity 0.3s;
+    mix-blend-mode: screen;
   }
 
-  @keyframes twinkle {
-    0%, 100% { opacity: 0.2; transform: scale(1); }
-    50% { opacity: 1; transform: scale(1.5); box-shadow: 0 0 8px #fff; }
+  .stage {
+    position: relative;
+    z-index: 10;
+    transform-style: preserve-3d;
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+  }
+
+  .side-panel {
+    width: 240px;
+    background: rgba(10, 10, 25, 0.7);
+    backdrop-filter: blur(20px);
+    border: 1.5px solid color-mix(in srgb, var(--c2) 30%, transparent);
+    border-radius: 20px;
+    padding: 18px;
+    box-shadow:
+      0 0 30px color-mix(in srgb, var(--c2) 25%, transparent),
+      inset 0 0 20px color-mix(in srgb, var(--c2) 8%, transparent);
+    transform: translateZ(20px);
+    animation: floatIn 0.9s ease-out 0.3s backwards;
+  }
+
+  .panel-title {
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 800;
+    font-size: 11px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--c2);
+    text-shadow: 0 0 10px var(--c2);
+    margin-bottom: 12px;
+    text-align: center;
+    border-bottom: 1px solid color-mix(in srgb, var(--c2) 30%, transparent);
+    padding-bottom: 10px;
+  }
+
+  .history-list {
+    list-style: none;
+    max-height: 380px;
+    overflow-y: auto;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 13px;
+  }
+
+  .history-list::-webkit-scrollbar { width: 4px; }
+  .history-list::-webkit-scrollbar-thumb {
+    background: var(--c1);
+    border-radius: 2px;
+  }
+  .history-list::-webkit-scrollbar-track { background: transparent; }
+
+  .history-list li {
+    padding: 8px 6px;
+    color: rgba(255, 255, 255, 0.6);
+    border-bottom: 1px dashed rgba(255, 255, 255, 0.07);
+    cursor: pointer;
+    transition: all 0.2s;
+    word-break: break-all;
+  }
+
+  .history-list li:hover {
+    color: var(--c2);
+    background: color-mix(in srgb, var(--c2) 10%, transparent);
+    transform: translateX(4px);
+    text-shadow: 0 0 8px var(--c2);
+  }
+
+  .history-list .h-expr {
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 11px;
+    margin-bottom: 2px;
+  }
+
+  .history-list .h-res {
+    color: var(--c1);
+    text-shadow: 0 0 6px var(--c1);
+    font-weight: bold;
+  }
+
+  .history-empty {
+    text-align: center;
+    color: rgba(255, 255, 255, 0.3);
+    font-size: 11px;
+    padding: 20px 0;
+    font-family: 'Share Tech Mono', monospace;
+    letter-spacing: 2px;
+  }
+
+  .clear-history {
+    margin-top: 12px;
+    width: 100%;
+    background: transparent;
+    border: 1px solid color-mix(in srgb, var(--c3) 40%, transparent);
+    color: var(--c3);
+    padding: 8px;
+    border-radius: 8px;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 10px;
+    letter-spacing: 2px;
+    cursor: pointer;
+    text-shadow: 0 0 6px var(--c3);
+    transition: all 0.25s;
+  }
+
+  .clear-history:hover {
+    background: color-mix(in srgb, var(--c3) 15%, transparent);
+    box-shadow: 0 0 15px color-mix(in srgb, var(--c3) 60%, transparent);
   }
 
   .calculator {
-    background: rgba(15, 15, 40, 0.85);
-    backdrop-filter: blur(20px);
-    border: 2px solid rgba(255, 0, 200, 0.3);
-    border-radius: 25px;
-    padding: 30px;
-    box-shadow:
-      0 0 30px rgba(255, 0, 200, 0.4),
-      0 0 60px rgba(0, 200, 255, 0.2),
-      inset 0 0 30px rgba(0, 200, 255, 0.05);
     position: relative;
-    z-index: 10;
-    animation: floatIn 0.8s ease-out, glow 4s ease-in-out infinite alternate;
+    background: rgba(12, 12, 30, 0.82);
+    backdrop-filter: blur(24px);
+    border-radius: 28px;
+    padding: 28px;
+    width: 380px;
+    box-shadow:
+      0 0 40px color-mix(in srgb, var(--c1) 35%, transparent),
+      0 0 80px color-mix(in srgb, var(--c2) 18%, transparent),
+      inset 0 0 30px color-mix(in srgb, var(--c2) 5%, transparent);
+    transform: translateZ(50px);
+    animation: floatIn 1s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: transform 0.15s ease-out;
+    will-change: transform;
+  }
+
+  .calculator::before {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    border-radius: 30px;
+    background: conic-gradient(
+      from var(--angle, 0deg),
+      transparent 0deg,
+      var(--c1) 40deg,
+      var(--c2) 80deg,
+      transparent 120deg,
+      transparent 360deg
+    );
+    z-index: -1;
+    animation: chase 4s linear infinite;
+    filter: blur(2px);
+  }
+
+  @property --angle {
+    syntax: '<angle>';
+    initial-value: 0deg;
+    inherits: false;
+  }
+
+  @keyframes chase {
+    to { --angle: 360deg; }
+  }
+
+  .calculator::after {
+    content: '';
+    position: absolute;
+    inset: 2px;
+    border-radius: 26px;
+    background: rgba(12, 12, 30, 0.95);
+    z-index: -1;
   }
 
   @keyframes floatIn {
     from {
       opacity: 0;
-      transform: translateY(50px) scale(0.9);
+      transform: translateY(60px) translateZ(50px) rotateX(20deg);
     }
     to {
       opacity: 1;
-      transform: translateY(0) scale(1);
+      transform: translateY(0) translateZ(50px) rotateX(0);
     }
   }
 
-  @keyframes glow {
-    from {
-      box-shadow:
-        0 0 30px rgba(255, 0, 200, 0.4),
-        0 0 60px rgba(0, 200, 255, 0.2),
-        inset 0 0 30px rgba(0, 200, 255, 0.05);
-    }
-    to {
-      box-shadow:
-        0 0 40px rgba(0, 200, 255, 0.5),
-        0 0 80px rgba(255, 0, 200, 0.3),
-        inset 0 0 40px rgba(255, 0, 200, 0.05);
-    }
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 18px;
   }
 
-  .title {
-    text-align: center;
+  .brand {
+    font-weight: 900;
+    font-size: 13px;
+    letter-spacing: 5px;
     color: #fff;
-    font-size: 14px;
-    letter-spacing: 6px;
-    margin-bottom: 20px;
-    text-transform: uppercase;
     text-shadow:
-      0 0 5px #ff00c8,
-      0 0 10px #ff00c8,
-      0 0 20px #ff00c8;
-    animation: titleFlicker 3s infinite;
+      0 0 6px var(--c1),
+      0 0 14px var(--c1),
+      0 0 24px var(--c1);
+    animation: flicker 4s infinite;
   }
 
-  @keyframes titleFlicker {
-    0%, 100% { opacity: 1; }
+  @keyframes flicker {
+    0%, 100%, 90% { opacity: 1; }
+    91% { opacity: 0.4; }
     92% { opacity: 1; }
-    93% { opacity: 0.4; }
-    94% { opacity: 1; }
-    96% { opacity: 0.6; }
-    97% { opacity: 1; }
+    94% { opacity: 0.7; }
+    95% { opacity: 1; }
+  }
+
+  .controls {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .theme-dot {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 1.5px solid rgba(255, 255, 255, 0.3);
+    transition: all 0.25s;
+    box-shadow: 0 0 6px currentColor;
+  }
+
+  .theme-dot[data-set="cyber"] { background: linear-gradient(135deg, #ff00c8, #00f0ff); color: #ff00c8; }
+  .theme-dot[data-set="matrix"] { background: linear-gradient(135deg, #00ff7f, #7dff00); color: #00ff7f; }
+  .theme-dot[data-set="sunset"] { background: linear-gradient(135deg, #ff7b00, #ff006e); color: #ff7b00; }
+
+  .theme-dot:hover {
+    transform: scale(1.25);
+    border-color: #fff;
+    box-shadow: 0 0 14px currentColor;
+  }
+
+  .theme-dot.active {
+    border-color: #fff;
+    transform: scale(1.15);
+    box-shadow: 0 0 16px currentColor;
+  }
+
+  .sound-toggle {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 1px solid color-mix(in srgb, var(--c2) 40%, transparent);
+    background: transparent;
+    color: var(--c2);
+    cursor: pointer;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    text-shadow: 0 0 6px var(--c2);
+    margin-left: 4px;
+  }
+
+  .sound-toggle:hover {
+    background: color-mix(in srgb, var(--c2) 15%, transparent);
+    box-shadow: 0 0 12px color-mix(in srgb, var(--c2) 60%, transparent);
   }
 
   .display {
-    background: rgba(0, 0, 30, 0.8);
-    border: 2px solid rgba(0, 255, 255, 0.4);
-    border-radius: 15px;
-    padding: 20px;
+    background: linear-gradient(180deg,
+      rgba(0, 0, 25, 0.9),
+      rgba(0, 0, 15, 0.95));
+    border: 1.5px solid color-mix(in srgb, var(--c2) 35%, transparent);
+    border-radius: 16px;
+    padding: 18px 20px;
     margin-bottom: 20px;
-    min-height: 120px;
+    min-height: 130px;
     text-align: right;
     box-shadow:
-      inset 0 0 20px rgba(0, 255, 255, 0.2),
-      0 0 15px rgba(0, 255, 255, 0.3);
+      inset 0 0 25px color-mix(in srgb, var(--c2) 18%, transparent),
+      0 0 18px color-mix(in srgb, var(--c2) 28%, transparent);
     overflow: hidden;
     position: relative;
   }
@@ -151,437 +395,1085 @@
     left: -100%;
     width: 100%;
     height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(0, 255, 255, 0.1), transparent);
-    animation: scan 4s infinite;
+    background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--c2) 15%, transparent), transparent);
+    animation: scan 5s infinite;
+    pointer-events: none;
+  }
+
+  .display::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(0deg,
+      rgba(0, 0, 0, 0.12) 0,
+      rgba(0, 0, 0, 0.12) 1px,
+      transparent 1px,
+      transparent 3px);
+    pointer-events: none;
   }
 
   @keyframes scan {
-    0% { left: -100%; }
+    0%, 80% { left: -100%; }
     100% { left: 100%; }
   }
 
-  .history {
-    color: rgba(0, 255, 255, 0.5);
-    font-size: 16px;
-    min-height: 24px;
-    font-family: 'Courier New', monospace;
-    text-shadow: 0 0 5px rgba(0, 255, 255, 0.5);
-    word-break: break-all;
+  .history-line {
+    color: rgba(255, 255, 255, 0.45);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 14px;
+    min-height: 20px;
+    margin-bottom: 6px;
+    text-shadow: 0 0 4px color-mix(in srgb, var(--c2) 50%, transparent);
+    letter-spacing: 1px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .current {
-    color: #00ffff;
-    font-size: 40px;
-    font-weight: bold;
-    font-family: 'Courier New', monospace;
-    text-shadow:
-      0 0 5px #00ffff,
-      0 0 15px #00ffff,
-      0 0 25px #00ffff;
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 800;
+    font-size: 44px;
+    background: linear-gradient(135deg,
+      var(--c2) 0%,
+      #ffffff 50%,
+      var(--c1) 100%);
+    background-size: 200% 200%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    filter: drop-shadow(0 0 6px var(--c2)) drop-shadow(0 0 14px color-mix(in srgb, var(--c2) 60%, transparent));
     word-break: break-all;
-    transition: all 0.2s;
+    line-height: 1.1;
+    animation: holo 6s ease-in-out infinite;
+    position: relative;
   }
 
-  .current.updated {
-    animation: pulse 0.3s ease;
+  @keyframes holo {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
   }
 
-  @keyframes pulse {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.05); text-shadow: 0 0 5px #fff, 0 0 15px #00ffff, 0 0 25px #00ffff, 0 0 40px #00ffff; }
-    100% { transform: scale(1); }
+  .current.error {
+    background: linear-gradient(135deg, var(--c3), #fff, var(--c3));
+    background-size: 200% 200%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    animation: errorShake 0.6s, holo 6s ease-in-out infinite;
+  }
+
+  @keyframes errorShake {
+    0%, 100% { transform: translateX(0); }
+    20%, 60% { transform: translateX(-8px); }
+    40%, 80% { transform: translateX(8px); }
+  }
+
+  .current.flash {
+    animation: holoFlash 0.6s ease, holo 6s ease-in-out infinite;
+  }
+
+  @keyframes holoFlash {
+    0% { filter: drop-shadow(0 0 6px var(--c2)) drop-shadow(0 0 14px var(--c2)); }
+    50% {
+      filter: drop-shadow(0 0 14px #fff) drop-shadow(0 0 30px var(--c1)) drop-shadow(0 0 50px var(--c2));
+      transform: scale(1.05);
+    }
+    100% { filter: drop-shadow(0 0 6px var(--c2)) drop-shadow(0 0 14px var(--c2)); }
   }
 
   .buttons {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 12px;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 10px;
   }
 
-  button {
-    background: rgba(20, 20, 50, 0.8);
-    border: 2px solid rgba(0, 255, 255, 0.3);
-    border-radius: 12px;
-    color: #00ffff;
-    font-size: 22px;
-    font-weight: bold;
-    height: 60px;
-    width: 60px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    text-shadow: 0 0 8px #00ffff;
-    box-shadow:
-      0 0 8px rgba(0, 255, 255, 0.2),
-      inset 0 0 8px rgba(0, 255, 255, 0.1);
+  button.btn {
     position: relative;
+    height: 54px;
+    border: 1.5px solid color-mix(in srgb, var(--c2) 30%, transparent);
+    background: linear-gradient(180deg, rgba(20, 20, 50, 0.85), rgba(10, 10, 30, 0.95));
+    border-radius: 12px;
+    color: #fff;
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 600;
+    font-size: 18px;
+    cursor: pointer;
+    text-shadow: 0 0 8px var(--c2);
+    box-shadow:
+      0 0 8px color-mix(in srgb, var(--c2) 25%, transparent),
+      inset 0 1px 0 rgba(255, 255, 255, 0.08),
+      inset 0 -2px 0 rgba(0, 0, 0, 0.4);
+    transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
     overflow: hidden;
-    font-family: 'Courier New', monospace;
+    will-change: transform, box-shadow;
   }
 
-  button::before {
+  button.btn::before {
     content: '';
     position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 0;
-    height: 0;
-    border-radius: 50%;
-    background: radial-gradient(circle, rgba(0, 255, 255, 0.4), transparent);
-    transform: translate(-50%, -50%);
-    transition: width 0.4s, height 0.4s;
+    inset: 0;
+    background: radial-gradient(circle at var(--mx, 50%) var(--my, 50%),
+      color-mix(in srgb, var(--c2) 35%, transparent),
+      transparent 60%);
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
   }
 
-  button:hover {
-    background: rgba(0, 255, 255, 0.15);
-    border-color: #00ffff;
+  button.btn:hover {
+    border-color: var(--c2);
     color: #fff;
     transform: translateY(-3px);
     box-shadow:
-      0 0 20px rgba(0, 255, 255, 0.8),
-      0 5px 15px rgba(0, 255, 255, 0.4),
-      inset 0 0 15px rgba(0, 255, 255, 0.3);
+      0 0 25px color-mix(in srgb, var(--c2) 75%, transparent),
+      0 6px 18px color-mix(in srgb, var(--c2) 35%, transparent),
+      inset 0 1px 0 rgba(255, 255, 255, 0.15),
+      inset 0 -2px 0 rgba(0, 0, 0, 0.3);
   }
 
-  button:hover::before {
-    width: 150%;
-    height: 150%;
-  }
+  button.btn:hover::before { opacity: 1; }
 
-  button:active {
-    transform: translateY(0) scale(0.95);
+  button.btn:active {
+    transform: translateY(0) scale(0.96);
     box-shadow:
-      0 0 30px rgba(0, 255, 255, 1),
-      inset 0 0 20px rgba(0, 255, 255, 0.5);
+      0 0 35px var(--c2),
+      inset 0 0 20px color-mix(in srgb, var(--c2) 40%, transparent),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1);
   }
 
-  button.operator {
-    color: #ff00c8;
-    border-color: rgba(255, 0, 200, 0.4);
-    text-shadow: 0 0 8px #ff00c8;
+  button.btn.op {
+    color: var(--c1);
+    border-color: color-mix(in srgb, var(--c1) 40%, transparent);
+    text-shadow: 0 0 8px var(--c1);
     box-shadow:
-      0 0 8px rgba(255, 0, 200, 0.2),
-      inset 0 0 8px rgba(255, 0, 200, 0.1);
+      0 0 8px color-mix(in srgb, var(--c1) 25%, transparent),
+      inset 0 1px 0 rgba(255, 255, 255, 0.08),
+      inset 0 -2px 0 rgba(0, 0, 0, 0.4);
   }
 
-  button.operator:hover {
-    background: rgba(255, 0, 200, 0.15);
-    border-color: #ff00c8;
+  button.btn.op:hover {
+    border-color: var(--c1);
     color: #fff;
     box-shadow:
-      0 0 20px rgba(255, 0, 200, 0.8),
-      0 5px 15px rgba(255, 0, 200, 0.4),
-      inset 0 0 15px rgba(255, 0, 200, 0.3);
+      0 0 25px color-mix(in srgb, var(--c1) 80%, transparent),
+      0 6px 18px color-mix(in srgb, var(--c1) 40%, transparent),
+      inset 0 1px 0 rgba(255, 255, 255, 0.15);
   }
 
-  button.operator::before {
-    background: radial-gradient(circle, rgba(255, 0, 200, 0.4), transparent);
+  button.btn.op::before {
+    background: radial-gradient(circle at var(--mx, 50%) var(--my, 50%),
+      color-mix(in srgb, var(--c1) 40%, transparent),
+      transparent 60%);
   }
 
-  button.equals {
+  button.btn.sci {
+    font-size: 14px;
     color: #fff;
-    background: linear-gradient(135deg, rgba(255, 0, 200, 0.3), rgba(0, 255, 255, 0.3));
+    border-color: rgba(255, 255, 255, 0.25);
+    text-shadow: 0 0 6px rgba(255, 255, 255, 0.6);
+    background: linear-gradient(180deg, rgba(30, 30, 60, 0.7), rgba(15, 15, 35, 0.9));
+  }
+
+  button.btn.sci:hover {
     border-color: #fff;
-    text-shadow: 0 0 10px #fff;
     box-shadow:
-      0 0 15px rgba(255, 255, 255, 0.4),
-      inset 0 0 15px rgba(255, 255, 255, 0.1);
+      0 0 20px rgba(255, 255, 255, 0.5),
+      inset 0 1px 0 rgba(255, 255, 255, 0.18);
   }
 
-  button.equals:hover {
-    background: linear-gradient(135deg, rgba(255, 0, 200, 0.6), rgba(0, 255, 255, 0.6));
+  button.btn.equals {
+    color: #fff;
+    background:
+      linear-gradient(135deg,
+        color-mix(in srgb, var(--c1) 60%, transparent),
+        color-mix(in srgb, var(--c2) 60%, transparent));
+    border-color: #fff;
+    text-shadow: 0 0 12px #fff;
     box-shadow:
-      0 0 30px rgba(255, 255, 255, 0.8),
-      0 5px 20px rgba(255, 0, 200, 0.5),
-      inset 0 0 20px rgba(255, 255, 255, 0.3);
+      0 0 20px color-mix(in srgb, var(--c1) 60%, transparent),
+      0 0 30px color-mix(in srgb, var(--c2) 40%, transparent),
+      inset 0 1px 0 rgba(255, 255, 255, 0.25),
+      inset 0 -2px 0 rgba(0, 0, 0, 0.2);
+    font-size: 22px;
   }
 
-  button.clear {
-    color: #ff3366;
-    border-color: rgba(255, 51, 102, 0.4);
-    text-shadow: 0 0 8px #ff3366;
+  button.btn.equals:hover {
+    transform: translateY(-3px);
     box-shadow:
-      0 0 8px rgba(255, 51, 102, 0.2),
-      inset 0 0 8px rgba(255, 51, 102, 0.1);
+      0 0 35px var(--c1),
+      0 0 55px color-mix(in srgb, var(--c2) 80%, transparent),
+      0 8px 20px color-mix(in srgb, var(--c1) 50%, transparent),
+      inset 0 1px 0 rgba(255, 255, 255, 0.35);
   }
 
-  button.clear:hover {
-    background: rgba(255, 51, 102, 0.15);
-    border-color: #ff3366;
+  button.btn.clear {
+    color: var(--c3);
+    border-color: color-mix(in srgb, var(--c3) 40%, transparent);
+    text-shadow: 0 0 8px var(--c3);
+  }
+
+  button.btn.clear:hover {
+    border-color: var(--c3);
     color: #fff;
     box-shadow:
-      0 0 20px rgba(255, 51, 102, 0.8),
-      0 5px 15px rgba(255, 51, 102, 0.4),
-      inset 0 0 15px rgba(255, 51, 102, 0.3);
+      0 0 25px color-mix(in srgb, var(--c3) 80%, transparent),
+      0 6px 18px color-mix(in srgb, var(--c3) 40%, transparent),
+      inset 0 1px 0 rgba(255, 255, 255, 0.15);
   }
 
-  button.zero {
+  button.btn.clear::before {
+    background: radial-gradient(circle at var(--mx, 50%) var(--my, 50%),
+      color-mix(in srgb, var(--c3) 40%, transparent),
+      transparent 60%);
+  }
+
+  button.btn.zero {
     grid-column: span 2;
-    width: 100%;
   }
 
-  button.pressed {
+  button.btn.pressed {
     animation: btnPress 0.4s ease;
   }
 
   @keyframes btnPress {
     0% { transform: scale(1); }
-    50% { transform: scale(0.92); box-shadow: 0 0 40px currentColor; }
+    35% { transform: scale(0.9); }
     100% { transform: scale(1); }
+  }
+
+  /* booting overlay */
+  .boot {
+    position: fixed;
+    inset: 0;
+    background: #05050f;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    transition: opacity 0.7s, visibility 0.7s;
+    font-family: 'Share Tech Mono', monospace;
+  }
+
+  .boot.done {
+    opacity: 0;
+    visibility: hidden;
+  }
+
+  .boot-logo {
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 900;
+    font-size: 36px;
+    letter-spacing: 12px;
+    color: var(--c2);
+    text-shadow:
+      0 0 8px var(--c2),
+      0 0 20px var(--c2),
+      0 0 40px var(--c2);
+    margin-bottom: 28px;
+    animation: bootGlow 1.5s ease-in-out infinite alternate;
+  }
+
+  @keyframes bootGlow {
+    from { filter: brightness(1); }
+    to { filter: brightness(1.4); }
+  }
+
+  .boot-bar {
+    width: 280px;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 2px;
+    overflow: hidden;
+    box-shadow: 0 0 10px var(--c1);
+    margin-bottom: 12px;
+  }
+
+  .boot-bar-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, var(--c1), var(--c2));
+    box-shadow: 0 0 10px var(--c2);
+    animation: bootFill 1.6s ease-out forwards;
+  }
+
+  @keyframes bootFill {
+    to { width: 100%; }
+  }
+
+  .boot-status {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.5);
+    letter-spacing: 4px;
+    text-transform: uppercase;
+  }
+
+  /* digit fall animation */
+  .digit-anim {
+    display: inline-block;
+    animation: digitFall 0.4s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+  }
+
+  @keyframes digitFall {
+    from {
+      opacity: 0;
+      transform: translateY(-15px) scale(0.5);
+      filter: blur(8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+      filter: blur(0);
+    }
+  }
+
+  /* particle bursts */
+  .particle {
+    position: fixed;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 50;
+    animation: particleFly 1s ease-out forwards;
+  }
+
+  @keyframes particleFly {
+    0% {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1);
+    }
+    100% {
+      opacity: 0;
+      transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(0);
+    }
   }
 
   .ripple {
     position: absolute;
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.5);
+    background: rgba(255, 255, 255, 0.4);
     transform: scale(0);
-    animation: rippleEffect 0.6s linear;
+    animation: rippleEffect 0.7s ease-out forwards;
     pointer-events: none;
   }
 
   @keyframes rippleEffect {
     to {
-      transform: scale(4);
+      transform: scale(5);
       opacity: 0;
     }
   }
 
-  @media (max-width: 400px) {
-    .calculator { padding: 20px; }
-    button { height: 55px; font-size: 18px; }
-    .current { font-size: 32px; }
+  @media (max-width: 900px) {
+    .stage { flex-direction: column; gap: 12px; }
+    .side-panel { width: 380px; max-width: 100%; }
+    .history-list { max-height: 120px; }
+  }
+
+  @media (max-width: 480px) {
+    .calculator { width: 95vw; padding: 20px; }
+    button.btn { height: 48px; font-size: 16px; }
+    button.btn.sci { font-size: 12px; }
+    .current { font-size: 34px; }
+    .side-panel { width: 95vw; }
   }
 </style>
 </head>
 <body>
-  <div class="stars" id="stars"></div>
+  <canvas id="bg-canvas"></canvas>
+  <div class="cursor-light" id="cursorLight"></div>
+  <div class="scanlines"></div>
 
-  <div class="calculator">
-    <div class="title">◆ NEON CALC ◆</div>
-    <div class="display">
-      <div class="history" id="history"></div>
-      <div class="current" id="current">0</div>
-    </div>
-    <div class="buttons">
-      <button class="clear" onclick="clearAll()">AC</button>
-      <button class="clear" onclick="deleteLast()">⌫</button>
-      <button class="operator" onclick="appendOperator('%')">%</button>
-      <button class="operator" onclick="appendOperator('/')">÷</button>
+  <div class="boot" id="boot">
+    <div class="boot-logo">NEON CALC</div>
+    <div class="boot-bar"><div class="boot-bar-fill"></div></div>
+    <div class="boot-status" id="bootStatus">Booting holographic interface...</div>
+  </div>
 
-      <button onclick="appendNumber('7')">7</button>
-      <button onclick="appendNumber('8')">8</button>
-      <button onclick="appendNumber('9')">9</button>
-      <button class="operator" onclick="appendOperator('*')">×</button>
+  <div class="stage" id="stage">
+    <aside class="side-panel">
+      <div class="panel-title">◆ History</div>
+      <ul class="history-list" id="historyList"></ul>
+      <div class="history-empty" id="historyEmpty">— EMPTY LOG —</div>
+      <button class="clear-history" id="clearHistory">Clear log</button>
+    </aside>
 
-      <button onclick="appendNumber('4')">4</button>
-      <button onclick="appendNumber('5')">5</button>
-      <button onclick="appendNumber('6')">6</button>
-      <button class="operator" onclick="appendOperator('-')">−</button>
+    <div class="calculator" id="calc">
+      <div class="header">
+        <div class="brand">◆ NEON CALC ◆</div>
+        <div class="controls">
+          <div class="theme-dot active" data-set="cyber" title="Cyber"></div>
+          <div class="theme-dot" data-set="matrix" title="Matrix"></div>
+          <div class="theme-dot" data-set="sunset" title="Sunset"></div>
+          <button class="sound-toggle" id="soundToggle" title="Sound">🔊</button>
+        </div>
+      </div>
 
-      <button onclick="appendNumber('1')">1</button>
-      <button onclick="appendNumber('2')">2</button>
-      <button onclick="appendNumber('3')">3</button>
-      <button class="operator" onclick="appendOperator('+')">+</button>
+      <div class="display">
+        <div class="history-line" id="histLine">&nbsp;</div>
+        <div class="current" id="current">0</div>
+      </div>
 
-      <button class="zero" onclick="appendNumber('0')">0</button>
-      <button onclick="appendDecimal()">.</button>
-      <button class="equals" onclick="calculate()">=</button>
+      <div class="buttons" id="buttons">
+        <!-- row 1: scientific -->
+        <button class="btn sci" data-act="sci" data-val="sqrt">√x</button>
+        <button class="btn sci" data-act="sci" data-val="sq">x²</button>
+        <button class="btn sci" data-act="sci" data-val="inv">1/x</button>
+        <button class="btn sci" data-act="sci" data-val="pi">π</button>
+        <button class="btn sci" data-act="sci" data-val="neg">±</button>
+
+        <!-- row 2 -->
+        <button class="btn clear" data-act="ac">AC</button>
+        <button class="btn clear" data-act="del">⌫</button>
+        <button class="btn op" data-act="op" data-val="%">%</button>
+        <button class="btn op" data-act="op" data-val="/">÷</button>
+        <button class="btn op" data-act="op" data-val="*">×</button>
+
+        <!-- row 3 -->
+        <button class="btn" data-act="num" data-val="7">7</button>
+        <button class="btn" data-act="num" data-val="8">8</button>
+        <button class="btn" data-act="num" data-val="9">9</button>
+        <button class="btn op" data-act="op" data-val="-">−</button>
+        <button class="btn op" data-act="op" data-val="+" style="grid-row: span 2; height: auto;">+</button>
+
+        <!-- row 4 -->
+        <button class="btn" data-act="num" data-val="4">4</button>
+        <button class="btn" data-act="num" data-val="5">5</button>
+        <button class="btn" data-act="num" data-val="6">6</button>
+        <button class="btn" data-act="num" data-val="0" style="grid-row: span 2; height: auto;">0</button>
+
+        <!-- row 5 -->
+        <button class="btn" data-act="num" data-val="1">1</button>
+        <button class="btn" data-act="num" data-val="2">2</button>
+        <button class="btn" data-act="num" data-val="3">3</button>
+        <button class="btn equals" data-act="eq" style="grid-row: span 2; height: auto;">=</button>
+
+        <!-- row 6 -->
+        <button class="btn" data-act="dot">.</button>
+        <button class="btn sci" data-act="sci" data-val="parens">( )</button>
+        <button class="btn sci" data-act="sci" data-val="ans">ANS</button>
+      </div>
     </div>
   </div>
 
 <script>
-  // создаем звезды на фоне
-  const starsContainer = document.getElementById('stars');
-  for (let i = 0; i < 80; i++) {
-    const star = document.createElement('div');
-    star.className = 'star';
-    star.style.left = Math.random() * 100 + '%';
-    star.style.top = Math.random() * 100 + '%';
-    star.style.animationDelay = Math.random() * 3 + 's';
-    star.style.animationDuration = (2 + Math.random() * 3) + 's';
-    starsContainer.appendChild(star);
+/* =========================================================
+   Particle field background — flowing nodes connected by lines
+   ========================================================= */
+(() => {
+  const canvas = document.getElementById('bg-canvas');
+  const ctx = canvas.getContext('2d');
+  let W, H, particles = [];
+  const COUNT = 60;
+
+  function resize() {
+    W = canvas.width = window.innerWidth * window.devicePixelRatio;
+    H = canvas.height = window.innerHeight * window.devicePixelRatio;
+    canvas.style.width = window.innerWidth + 'px';
+    canvas.style.height = window.innerHeight + 'px';
   }
+  resize();
+  window.addEventListener('resize', resize);
 
-  const currentEl = document.getElementById('current');
-  const historyEl = document.getElementById('history');
-
-  let current = '0';
-  let history = '';
-  let lastWasOperator = false;
-  let justCalculated = false;
-
-  function updateDisplay() {
-    currentEl.textContent = current;
-    historyEl.textContent = history;
-    currentEl.classList.remove('updated');
-    void currentEl.offsetWidth;
-    currentEl.classList.add('updated');
-  }
-
-  function animateButton(btn) {
-    btn.classList.remove('pressed');
-    void btn.offsetWidth;
-    btn.classList.add('pressed');
-  }
-
-  function appendNumber(num) {
-    animateButton(event.target);
-    if (justCalculated) {
-      current = num;
-      history = '';
-      justCalculated = false;
-    } else if (current === '0' || lastWasOperator) {
-      if (lastWasOperator) {
-        history += current;
-      }
-      current = num;
-    } else {
-      if (current.length < 12) current += num;
-    }
-    lastWasOperator = false;
-    updateDisplay();
-  }
-
-  function appendDecimal() {
-    animateButton(event.target);
-    if (justCalculated) {
-      current = '0.';
-      history = '';
-      justCalculated = false;
-    } else if (lastWasOperator) {
-      history += current;
-      current = '0.';
-      lastWasOperator = false;
-    } else if (!current.includes('.')) {
-      current += '.';
-    }
-    updateDisplay();
-  }
-
-  function appendOperator(op) {
-    animateButton(event.target);
-    const symbol = op === '*' ? '×' : op === '/' ? '÷' : op === '-' ? '−' : op;
-    if (lastWasOperator) {
-      history = history.slice(0, -3) + ' ' + symbol + ' ';
-    } else {
-      history += current + ' ' + symbol + ' ';
-      lastWasOperator = true;
-    }
-    justCalculated = false;
-    updateDisplay();
-  }
-
-  function calculate() {
-    animateButton(event.target);
-    try {
-      let expr = history + (lastWasOperator ? '' : current);
-      let evalExpr = expr
-        .replace(/×/g, '*')
-        .replace(/÷/g, '/')
-        .replace(/−/g, '-')
-        .replace(/%/g, '/100');
-      if (!evalExpr.trim()) return;
-      const result = Function('"use strict";return (' + evalExpr + ')')();
-      if (!isFinite(result)) {
-        current = 'ERROR';
-        history = '';
-      } else {
-        history = expr + ' =';
-        current = String(Math.round(result * 1e10) / 1e10);
-      }
-      justCalculated = true;
-      lastWasOperator = false;
-      flashScreen();
-    } catch (e) {
-      current = 'ERROR';
-      history = '';
-    }
-    updateDisplay();
-  }
-
-  function clearAll() {
-    animateButton(event.target);
-    current = '0';
-    history = '';
-    lastWasOperator = false;
-    justCalculated = false;
-    updateDisplay();
-  }
-
-  function deleteLast() {
-    animateButton(event.target);
-    if (justCalculated) {
-      clearAll();
-      return;
-    }
-    if (current.length > 1) {
-      current = current.slice(0, -1);
-    } else {
-      current = '0';
-    }
-    updateDisplay();
-  }
-
-  function flashScreen() {
-    const display = document.querySelector('.display');
-    display.animate([
-      { boxShadow: 'inset 0 0 20px rgba(0, 255, 255, 0.2), 0 0 15px rgba(0, 255, 255, 0.3)' },
-      { boxShadow: 'inset 0 0 40px rgba(255, 0, 200, 0.8), 0 0 60px rgba(255, 0, 200, 0.9)' },
-      { boxShadow: 'inset 0 0 20px rgba(0, 255, 255, 0.2), 0 0 15px rgba(0, 255, 255, 0.3)' }
-    ], { duration: 600, easing: 'ease-out' });
-  }
-
-  // поддержка клавиатуры
-  document.addEventListener('keydown', (e) => {
-    const key = e.key;
-    if (/[0-9]/.test(key)) {
-      const btn = [...document.querySelectorAll('button')].find(b => b.textContent === key);
-      if (btn) { btn.click(); }
-    } else if (key === '.') {
-      const btn = [...document.querySelectorAll('button')].find(b => b.textContent === '.');
-      if (btn) btn.click();
-    } else if (key === '+') {
-      const btn = [...document.querySelectorAll('button')].find(b => b.textContent === '+');
-      if (btn) btn.click();
-    } else if (key === '-') {
-      const btn = [...document.querySelectorAll('button')].find(b => b.textContent === '−');
-      if (btn) btn.click();
-    } else if (key === '*') {
-      const btn = [...document.querySelectorAll('button')].find(b => b.textContent === '×');
-      if (btn) btn.click();
-    } else if (key === '/') {
-      e.preventDefault();
-      const btn = [...document.querySelectorAll('button')].find(b => b.textContent === '÷');
-      if (btn) btn.click();
-    } else if (key === '%') {
-      const btn = [...document.querySelectorAll('button')].find(b => b.textContent === '%');
-      if (btn) btn.click();
-    } else if (key === 'Enter' || key === '=') {
-      e.preventDefault();
-      const btn = document.querySelector('.equals');
-      if (btn) btn.click();
-    } else if (key === 'Backspace') {
-      const btn = [...document.querySelectorAll('button')].find(b => b.textContent === '⌫');
-      if (btn) btn.click();
-    } else if (key === 'Escape') {
-      const btn = [...document.querySelectorAll('button')].find(b => b.textContent === 'AC');
-      if (btn) btn.click();
-    }
-  });
-
-  // эффект ряби при клике
-  document.querySelectorAll('button').forEach(btn => {
-    btn.addEventListener('click', function(e) {
-      const ripple = document.createElement('span');
-      ripple.className = 'ripple';
-      const rect = this.getBoundingClientRect();
-      const size = Math.max(rect.width, rect.height);
-      ripple.style.width = ripple.style.height = size + 'px';
-      ripple.style.left = (e.clientX - rect.left - size / 2) + 'px';
-      ripple.style.top = (e.clientY - rect.top - size / 2) + 'px';
-      this.appendChild(ripple);
-      setTimeout(() => ripple.remove(), 600);
+  for (let i = 0; i < COUNT; i++) {
+    particles.push({
+      x: Math.random() * W,
+      y: Math.random() * H,
+      vx: (Math.random() - 0.5) * 0.3,
+      vy: (Math.random() - 0.5) * 0.3,
+      r: Math.random() * 1.5 + 0.5
     });
+  }
+
+  let mx = -9999, my = -9999;
+  document.addEventListener('mousemove', e => {
+    mx = e.clientX * window.devicePixelRatio;
+    my = e.clientY * window.devicePixelRatio;
   });
+
+  function colorFromTheme() {
+    const t = document.body.dataset.theme || 'cyber';
+    if (t === 'matrix') return [0, 255, 127];
+    if (t === 'sunset') return [255, 123, 0];
+    return [0, 240, 255];
+  }
+
+  function tick() {
+    ctx.clearRect(0, 0, W, H);
+    const [r, g, b] = colorFromTheme();
+    const LINK = 140 * window.devicePixelRatio;
+
+    for (const p of particles) {
+      p.x += p.vx;
+      p.y += p.vy;
+      if (p.x < 0 || p.x > W) p.vx *= -1;
+      if (p.y < 0 || p.y > H) p.vy *= -1;
+
+      // pull toward cursor mildly
+      const dx = mx - p.x, dy = my - p.y;
+      const d = Math.hypot(dx, dy);
+      if (d < 200 * window.devicePixelRatio && d > 0) {
+        p.vx += (dx / d) * 0.01;
+        p.vy += (dy / d) * 0.01;
+      }
+      p.vx *= 0.99;
+      p.vy *= 0.99;
+
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r * window.devicePixelRatio, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(${r},${g},${b},0.8)`;
+      ctx.shadowBlur = 8;
+      ctx.shadowColor = `rgba(${r},${g},${b},0.9)`;
+      ctx.fill();
+    }
+    ctx.shadowBlur = 0;
+
+    // connections
+    for (let i = 0; i < particles.length; i++) {
+      for (let j = i + 1; j < particles.length; j++) {
+        const a = particles[i], b = particles[j];
+        const d = Math.hypot(a.x - b.x, a.y - b.y);
+        if (d < LINK) {
+          const alpha = (1 - d / LINK) * 0.35;
+          ctx.strokeStyle = `rgba(${r},${g},${b},${alpha})`;
+          ctx.lineWidth = 0.6 * window.devicePixelRatio;
+          ctx.beginPath();
+          ctx.moveTo(a.x, a.y);
+          ctx.lineTo(b.x, b.y);
+          ctx.stroke();
+        }
+      }
+    }
+
+    requestAnimationFrame(tick);
+  }
+  tick();
+})();
+
+/* =========================================================
+   Cursor light
+   ========================================================= */
+(() => {
+  const light = document.getElementById('cursorLight');
+  document.addEventListener('mousemove', e => {
+    light.style.left = e.clientX + 'px';
+    light.style.top = e.clientY + 'px';
+  });
+})();
+
+/* =========================================================
+   3D parallax tilt
+   ========================================================= */
+(() => {
+  const calc = document.getElementById('calc');
+  let raf = 0, targetX = 0, targetY = 0, curX = 0, curY = 0;
+
+  document.addEventListener('mousemove', e => {
+    const rect = calc.getBoundingClientRect();
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+    targetX = (e.clientY - cy) / window.innerHeight * -10;
+    targetY = (e.clientX - cx) / window.innerWidth * 10;
+    if (!raf) raf = requestAnimationFrame(loop);
+  });
+
+  function loop() {
+    curX += (targetX - curX) * 0.08;
+    curY += (targetY - curY) * 0.08;
+    calc.style.transform = `translateZ(50px) rotateX(${curX}deg) rotateY(${curY}deg)`;
+    if (Math.abs(targetX - curX) > 0.05 || Math.abs(targetY - curY) > 0.05) {
+      raf = requestAnimationFrame(loop);
+    } else {
+      raf = 0;
+    }
+  }
+})();
+
+/* =========================================================
+   Sound effects via Web Audio
+   ========================================================= */
+const Sound = (() => {
+  let ctx = null;
+  let muted = false;
+  const ensure = () => {
+    if (!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)();
+    if (ctx.state === 'suspended') ctx.resume();
+  };
+  const beep = (freq = 600, dur = 0.06, type = 'square', vol = 0.04) => {
+    if (muted) return;
+    ensure();
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    const f = ctx.createBiquadFilter();
+    f.type = 'lowpass';
+    f.frequency.value = 2400;
+    o.type = type;
+    o.frequency.value = freq;
+    g.gain.setValueAtTime(0, ctx.currentTime);
+    g.gain.linearRampToValueAtTime(vol, ctx.currentTime + 0.005);
+    g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + dur);
+    o.connect(f).connect(g).connect(ctx.destination);
+    o.start();
+    o.stop(ctx.currentTime + dur);
+  };
+  return {
+    num: () => beep(700 + Math.random() * 60, 0.05, 'square', 0.03),
+    op: () => beep(420, 0.07, 'sawtooth', 0.04),
+    eq: () => {
+      beep(660, 0.08, 'square', 0.05);
+      setTimeout(() => beep(880, 0.12, 'sine', 0.05), 70);
+      setTimeout(() => beep(1175, 0.14, 'sine', 0.04), 160);
+    },
+    clear: () => beep(220, 0.1, 'sawtooth', 0.05),
+    err: () => {
+      beep(180, 0.15, 'square', 0.06);
+      setTimeout(() => beep(140, 0.2, 'square', 0.06), 100);
+    },
+    boot: () => {
+      beep(440, 0.08, 'sine', 0.03);
+      setTimeout(() => beep(660, 0.08, 'sine', 0.03), 100);
+      setTimeout(() => beep(880, 0.12, 'sine', 0.03), 200);
+    },
+    setMuted: v => { muted = v; },
+    isMuted: () => muted
+  };
+})();
+
+/* =========================================================
+   Particle burst
+   ========================================================= */
+function burst(x, y, color, count = 24) {
+  for (let i = 0; i < count; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    const angle = (Math.PI * 2 * i) / count + Math.random() * 0.5;
+    const dist = 60 + Math.random() * 90;
+    p.style.left = x + 'px';
+    p.style.top = y + 'px';
+    p.style.background = color;
+    p.style.boxShadow = `0 0 8px ${color}, 0 0 16px ${color}`;
+    p.style.setProperty('--dx', Math.cos(angle) * dist + 'px');
+    p.style.setProperty('--dy', Math.sin(angle) * dist + 'px');
+    document.body.appendChild(p);
+    setTimeout(() => p.remove(), 1000);
+  }
+}
+
+/* =========================================================
+   Calculator core
+   ========================================================= */
+const state = {
+  expr: '',          // raw expression like "12+3*4"
+  display: '0',      // current display
+  history: '',       // history line (formatted)
+  justComputed: false,
+  lastAns: 0,
+  parenOpen: 0,
+  log: []            // [{expr, result}]
+};
+
+const currentEl = document.getElementById('current');
+const histLineEl = document.getElementById('histLine');
+const historyListEl = document.getElementById('historyList');
+const historyEmptyEl = document.getElementById('historyEmpty');
+
+function fmt(s) {
+  return s
+    .replace(/\*/g, '×')
+    .replace(/\//g, '÷')
+    .replace(/-/g, '−');
+}
+
+function renderDisplay(animate = false) {
+  if (animate) {
+    currentEl.innerHTML = '';
+    const text = String(state.display);
+    [...text].forEach((ch, i) => {
+      const span = document.createElement('span');
+      span.className = 'digit-anim';
+      span.textContent = ch;
+      span.style.animationDelay = (i * 0.04) + 's';
+      currentEl.appendChild(span);
+    });
+  } else {
+    currentEl.textContent = state.display;
+  }
+  histLineEl.innerHTML = state.history || '&nbsp;';
+}
+
+function renderHistory() {
+  historyListEl.innerHTML = '';
+  if (state.log.length === 0) {
+    historyEmptyEl.style.display = 'block';
+    return;
+  }
+  historyEmptyEl.style.display = 'none';
+  state.log.slice().reverse().forEach(item => {
+    const li = document.createElement('li');
+    li.innerHTML = `<div class="h-expr">${fmt(item.expr)}</div><div class="h-res">= ${item.result}</div>`;
+    li.addEventListener('click', () => {
+      state.display = String(item.result);
+      state.expr = String(item.result);
+      state.history = '';
+      state.justComputed = true;
+      renderDisplay(true);
+    });
+    historyListEl.appendChild(li);
+  });
+}
+
+function appendNum(n) {
+  if (state.justComputed) {
+    state.expr = n;
+    state.display = n;
+    state.history = '';
+    state.justComputed = false;
+  } else {
+    if (state.display === '0' || state.display === 'ERROR') {
+      state.display = n;
+      state.expr += n;
+    } else {
+      // check last token
+      const last = state.expr.slice(-1);
+      if (/[+\-*/(]/.test(last) || state.expr === '') {
+        state.display = n;
+      } else {
+        if (state.display.length < 14) state.display += n;
+      }
+      state.expr += n;
+    }
+  }
+  renderDisplay();
+}
+
+function appendDot() {
+  if (state.justComputed) {
+    state.expr = '0.';
+    state.display = '0.';
+    state.history = '';
+    state.justComputed = false;
+  } else {
+    // make sure current number doesn't already contain dot
+    const last = state.expr.match(/[\d.]+$/);
+    if (!last || !last[0].includes('.')) {
+      if (!last) {
+        state.expr += '0.';
+        state.display = '0.';
+      } else {
+        state.expr += '.';
+        state.display += '.';
+      }
+    }
+  }
+  renderDisplay();
+}
+
+function appendOp(op) {
+  if (state.display === 'ERROR') return;
+  if (state.justComputed) {
+    state.expr = state.display + op;
+    state.history = fmt(state.expr);
+    state.justComputed = false;
+    state.display = '0';
+  } else {
+    if (state.expr === '') {
+      state.expr = state.display + op;
+    } else if (/[+\-*/]$/.test(state.expr)) {
+      state.expr = state.expr.slice(0, -1) + op;
+    } else {
+      state.expr += op;
+    }
+    state.history = fmt(state.expr);
+    state.display = '0';
+  }
+  renderDisplay();
+}
+
+function applySci(kind) {
+  const cur = parseFloat(state.display);
+  if (kind === 'sqrt') {
+    if (cur < 0) return showError();
+    const r = Math.sqrt(cur);
+    state.history = `√(${state.display}) =`;
+    state.display = trim(r);
+    state.expr = state.display;
+    state.justComputed = true;
+  } else if (kind === 'sq') {
+    const r = cur * cur;
+    state.history = `(${state.display})² =`;
+    state.display = trim(r);
+    state.expr = state.display;
+    state.justComputed = true;
+  } else if (kind === 'inv') {
+    if (cur === 0) return showError();
+    const r = 1 / cur;
+    state.history = `1/(${state.display}) =`;
+    state.display = trim(r);
+    state.expr = state.display;
+    state.justComputed = true;
+  } else if (kind === 'pi') {
+    const v = trim(Math.PI);
+    if (state.justComputed || state.expr === '' || /[+\-*/(]$/.test(state.expr)) {
+      if (state.justComputed) { state.expr = ''; state.history = ''; }
+      state.expr += v;
+      state.display = v;
+      state.justComputed = false;
+    }
+  } else if (kind === 'neg') {
+    if (state.display === '0') return;
+    if (state.display.startsWith('-')) state.display = state.display.slice(1);
+    else state.display = '-' + state.display;
+    // update expression last number
+    state.expr = state.expr.replace(/(-?\d*\.?\d+)$/, state.display);
+  } else if (kind === 'parens') {
+    if (state.parenOpen === 0 || /[+\-*/(]$/.test(state.expr) || state.expr === '') {
+      state.expr += '(';
+      state.parenOpen++;
+    } else {
+      state.expr += ')';
+      state.parenOpen--;
+    }
+    state.history = fmt(state.expr);
+  } else if (kind === 'ans') {
+    const v = trim(state.lastAns);
+    if (state.justComputed) { state.expr = ''; state.history = ''; }
+    state.expr += v;
+    state.display = v;
+    state.justComputed = false;
+  }
+  renderDisplay(kind === 'sqrt' || kind === 'sq' || kind === 'inv');
+}
+
+function trim(n) {
+  if (!isFinite(n)) return 'ERROR';
+  return String(Math.round(n * 1e12) / 1e12);
+}
+
+function compute(btnEl) {
+  if (state.display === 'ERROR' || state.expr === '') return;
+  try {
+    let e = state.expr;
+    // close unmatched parens
+    while (state.parenOpen > 0) { e += ')'; state.parenOpen--; }
+    e = e.replace(/%/g, '/100');
+    if (/[+\-*/.]$/.test(e)) e = e.slice(0, -1);
+    const result = Function('"use strict"; return (' + e + ')')();
+    if (!isFinite(result)) return showError();
+    const trimmed = trim(result);
+    state.history = fmt(state.expr) + ' =';
+    state.display = trimmed;
+    state.lastAns = result;
+    state.justComputed = true;
+    state.log.push({ expr: state.expr, result: trimmed });
+    if (state.log.length > 50) state.log.shift();
+    renderDisplay(true);
+    renderHistory();
+    flashDisplay();
+    Sound.eq();
+    if (btnEl) {
+      const r = btnEl.getBoundingClientRect();
+      const root = getComputedStyle(document.body);
+      const c1 = root.getPropertyValue('--c1').trim();
+      const c2 = root.getPropertyValue('--c2').trim();
+      burst(r.left + r.width / 2, r.top + r.height / 2, c1, 18);
+      setTimeout(() => burst(r.left + r.width / 2, r.top + r.height / 2, c2, 18), 70);
+    }
+  } catch (e) {
+    showError();
+  }
+}
+
+function showError() {
+  state.display = 'ERROR';
+  currentEl.classList.add('error');
+  Sound.err();
+  renderDisplay();
+  setTimeout(() => currentEl.classList.remove('error'), 800);
+  state.expr = '';
+  state.history = '';
+  state.justComputed = true;
+  state.parenOpen = 0;
+}
+
+function flashDisplay() {
+  currentEl.classList.remove('flash');
+  void currentEl.offsetWidth;
+  currentEl.classList.add('flash');
+}
+
+function clearAll() {
+  state.expr = '';
+  state.display = '0';
+  state.history = '';
+  state.justComputed = false;
+  state.parenOpen = 0;
+  renderDisplay();
+  Sound.clear();
+}
+
+function delLast() {
+  if (state.display === 'ERROR') { clearAll(); return; }
+  if (state.justComputed) { clearAll(); return; }
+  if (state.expr.length <= 1) {
+    state.expr = '';
+    state.display = '0';
+  } else {
+    const removed = state.expr.slice(-1);
+    if (removed === '(') state.parenOpen--;
+    if (removed === ')') state.parenOpen++;
+    state.expr = state.expr.slice(0, -1);
+    if (state.display.length > 1) state.display = state.display.slice(0, -1);
+    else state.display = '0';
+  }
+  state.history = fmt(state.expr);
+  renderDisplay();
+  Sound.clear();
+}
+
+/* =========================================================
+   Button bindings
+   ========================================================= */
+document.getElementById('buttons').addEventListener('click', e => {
+  const btn = e.target.closest('button.btn');
+  if (!btn) return;
+  const act = btn.dataset.act;
+  const val = btn.dataset.val;
+
+  btn.classList.remove('pressed');
+  void btn.offsetWidth;
+  btn.classList.add('pressed');
+
+  // ripple
+  const rect = btn.getBoundingClientRect();
+  const ripple = document.createElement('span');
+  ripple.className = 'ripple';
+  const size = Math.max(rect.width, rect.height);
+  ripple.style.width = ripple.style.height = size + 'px';
+  ripple.style.left = (e.clientX - rect.left - size / 2) + 'px';
+  ripple.style.top = (e.clientY - rect.top - size / 2) + 'px';
+  btn.appendChild(ripple);
+  setTimeout(() => ripple.remove(), 700);
+
+  if (act === 'num') { appendNum(val); Sound.num(); }
+  else if (act === 'dot') { appendDot(); Sound.num(); }
+  else if (act === 'op') { appendOp(val); Sound.op(); }
+  else if (act === 'eq') compute(btn);
+  else if (act === 'ac') clearAll();
+  else if (act === 'del') delLast();
+  else if (act === 'sci') applySci(val);
+});
+
+// mouse position for button radial highlight
+document.querySelectorAll('button.btn').forEach(btn => {
+  btn.addEventListener('mousemove', e => {
+    const r = btn.getBoundingClientRect();
+    btn.style.setProperty('--mx', ((e.clientX - r.left) / r.width * 100) + '%');
+    btn.style.setProperty('--my', ((e.clientY - r.top) / r.height * 100) + '%');
+  });
+});
+
+document.getElementById('clearHistory').addEventListener('click', () => {
+  state.log = [];
+  renderHistory();
+  Sound.clear();
+});
+
+/* =========================================================
+   Theme switcher
+   ========================================================= */
+document.querySelectorAll('.theme-dot').forEach(dot => {
+  dot.addEventListener('click', () => {
+    document.querySelectorAll('.theme-dot').forEach(d => d.classList.remove('active'));
+    dot.classList.add('active');
+    document.body.dataset.theme = dot.dataset.set === 'cyber' ? '' : dot.dataset.set;
+    Sound.op();
+  });
+});
+
+/* =========================================================
+   Sound toggle
+   ========================================================= */
+const soundBtn = document.getElementById('soundToggle');
+soundBtn.addEventListener('click', () => {
+  const muted = !Sound.isMuted();
+  Sound.setMuted(muted);
+  soundBtn.textContent = muted ? '🔇' : '🔊';
+  if (!muted) Sound.op();
+});
+
+/* =========================================================
+   Keyboard
+   ========================================================= */
+document.addEventListener('keydown', e => {
+  const k = e.key;
+  if (/^[0-9]$/.test(k)) {
+    appendNum(k); Sound.num();
+    findBtn(b => b.dataset.act === 'num' && b.dataset.val === k);
+  } else if (k === '.') {
+    appendDot(); Sound.num();
+    findBtn(b => b.dataset.act === 'dot');
+  } else if (k === '+' || k === '-' || k === '*' || k === '/' || k === '%') {
+    if (k === '/') e.preventDefault();
+    appendOp(k); Sound.op();
+    findBtn(b => b.dataset.act === 'op' && b.dataset.val === k);
+  } else if (k === 'Enter' || k === '=') {
+    e.preventDefault();
+    const btn = document.querySelector('[data-act="eq"]');
+    compute(btn);
+    flashBtn(btn);
+  } else if (k === 'Backspace') {
+    delLast();
+    findBtn(b => b.dataset.act === 'del');
+  } else if (k === 'Escape') {
+    clearAll();
+    findBtn(b => b.dataset.act === 'ac');
+  } else if (k === '(' || k === ')') {
+    applySci('parens'); Sound.op();
+    findBtn(b => b.dataset.val === 'parens');
+  }
+});
+
+function findBtn(predicate) {
+  const btn = [...document.querySelectorAll('button.btn')].find(predicate);
+  flashBtn(btn);
+}
+
+function flashBtn(btn) {
+  if (!btn) return;
+  btn.classList.remove('pressed');
+  void btn.offsetWidth;
+  btn.classList.add('pressed');
+}
+
+/* =========================================================
+   Boot sequence
+   ========================================================= */
+const boot = document.getElementById('boot');
+const bootStatus = document.getElementById('bootStatus');
+const steps = [
+  'Booting holographic interface...',
+  'Calibrating photonic emitters...',
+  'Syncing neural grid...',
+  'Online.'
+];
+let stepIdx = 0;
+const stepTimer = setInterval(() => {
+  stepIdx++;
+  if (stepIdx < steps.length) bootStatus.textContent = steps[stepIdx];
+}, 480);
+
+setTimeout(() => {
+  clearInterval(stepTimer);
+  boot.classList.add('done');
+  Sound.boot();
+  renderDisplay();
+  renderHistory();
+}, 1900);
+
+// initial render
+renderDisplay();
+renderHistory();
 </script>
 </body>
 </html>
